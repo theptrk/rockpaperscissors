@@ -7,8 +7,17 @@
     html {
       font-family: 'Open Sans', sans-serif;
     }
+    .bigger {
+      font-size: 1.2em;
+    }
     .hidden {
       display: none;
+    }
+    #score_board {
+      margin-top: 30px;
+    }
+    table, th, td {
+      border: 1px solid lightgrey;
     }
   </style>
 </head>
@@ -19,25 +28,72 @@
   <div id="play_container" class="hidden">
     <label for="choice">Choose a move:</label>
     <select id="choice" name="choice" form="choice_form">
-      <option value="rock">Rock</option>
-      <option value="paper">Paper</option>
-      <option value="scissors">Scissors</option>
+        <option value="rock">Rock</option>
+        <option value="paper">Paper</option>
+        <option value="scissors">Scissors</option>
     </select>
     <br>
     <form action="" id="choice_form">
-      <input type="submit">
+      <input type="submit" class='bigger' value='Play'>
     </form>
   </div>
   <div id="result_container" class="hidden">
-    <h2 id="result_text"></h2>
-    <p>
-      User chooses: <span id='user_choice'></span>
-    <p>
-    <p>
-      Computer chooses: <span id='computer_choice'>...</span>
-    </p>
+    User chooses: <span id='user_choice'></span>
     <br/>
+    Computer chooses: <span id='computer_choice'>...</span>
+    <h2 id="result_text"></h2>
     <a href="/">Play again</a>
+    <br/>
+  </div>
+  <div id='score_board'>
+    <!--
+    user choices
+             observations rewards win rate
+    rock     1            1       1/1
+    paper    2            0       2/0
+    scissors 3            0       3/0
+    all      6            0       6/0
+
+    computer choices
+             observations rewards win rate
+    rock     1            1       1/1
+    paper    2            0       2/0
+    scissors 3            0       3/0
+    -->
+    <table>
+      <caption>User Scoreboard</caption>
+      <tr>
+        <th></th>
+        <th>observations</th>
+        <th>rewards</th>
+        <th>win rate</th>
+      </tr>
+      <tr>
+        <td>rock</td>
+        <td id='user_rock_observations'>###</td>
+        <td id='user_rock_rewards'>###</td>
+        <td id='user_rock_win_rate'>###</td>
+      </tr>
+      <tr>
+        <td>paper</td>
+        <td id='user_paper_observations'>###</td>
+        <td id='user_paper_rewards'>###</td>
+        <td id='user_paper_win_rate'>###</td>
+      </tr>
+      <tr>
+        <td>scissors</td>
+        <td id='user_scissors_observations'>###</td>
+        <td id='user_scissors_rewards'>###</td>
+        <td id='user_scissors_win_rate'>###</td>
+      </tr>
+      <tr>
+        <td>all</td>
+        <td id='user_all_observations'>###</td>
+        <td id='user_all_rewards'>###</td>
+        <td id='user_all_win_rate'>###</td>
+      </tr>
+    </table>
+    <a href="/?fresh_start=true">Reset Scoreboard</a>
   </div>
 
   <script type="text/javascript">
@@ -51,8 +107,19 @@
         x.innerText = text
       }
     }
+    var ls = {
+    }
+
+    const choices = ['rock', 'paper', 'scissors'];
+    const myStorage = window.localStorage;
 
     var urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.has('fresh_start')) {
+      myStorage.clear();
+    }
+
+    storeRestore()
 
     if (urlParams.has('choice')) {
       var userChoice = urlParams.get('choice')
@@ -65,10 +132,56 @@
 
       var result = judgeGame(userChoice, computerChoice) 
       $.setInnerText('result_text', result + "!")
+
+      storeGame(userChoice, result)
+      storeRestore()
     } else {
       $.removeClass('play_container', 'hidden');
     }
+    function storeRestore() {
+      // initialize
+      all_obs = 0;
+      all_rewards = 0;
 
+      choices.forEach(function(choice) {
+        // cache
+        var obs_key = `user_${choice}_observations`
+        var rewards_key = `user_${choice}_rewards`  
+        var win_rate_key = `user_${choice}_win_rate`  
+        // get
+        var obs_num = Number(myStorage.getItem(obs_key))
+        var rewards_num = Number(myStorage.getItem(rewards_key))
+        // store
+        all_obs += obs_num
+        all_rewards += rewards_num
+        // calculate
+        var win_rate = obs_num === 0 
+          ? 0 
+          : (rewards_num/obs_num).toFixed(4);
+        // show
+        $.setInnerText(obs_key, obs_num)
+        $.setInnerText(rewards_key, rewards_num)
+        $.setInnerText(win_rate_key, win_rate)
+      })
+
+      $.setInnerText('user_all_observations', all_obs)
+      $.setInnerText('user_all_rewards', all_rewards)
+      var win_rate = all_obs === 0 
+          ? 0 
+          : (all_rewards/all_obs).toFixed(4);
+      $.setInnerText('user_all_win_rate', win_rate)
+    }
+    function storeGame(userChoice, result) {
+      var obs_key = `user_${userChoice}_observations`
+      var obs_num = Number(myStorage.getItem(obs_key))
+      myStorage.setItem(obs_key, obs_num + 1)
+
+      if (result === 'win') {
+        var rewards_key = `user_${userChoice}_rewards`
+        var rewards_num = Number(myStorage.getItem(rewards_key))
+        myStorage.setItem(rewards_key, rewards_num + 1)
+      }
+    }
     function judgeGame(userChoice, computerChoice) {
       var combo = userChoice + "_" + computerChoice
       switch(combo) {
