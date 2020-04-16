@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rock Paper Scissors</title>
+  <style type="text/css">
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    Rock Paper Scissors
+  </h1>
+  <div id="play_container" class="hidden">
+    <label for="choice">Choose a move:</label>
+    <select id="choice" name="choice" form="choice_form">
+      <option value="rock">Rock</option>
+      <option value="paper">Paper</option>
+      <option value="scissors">Scissors</option>
+    </select>
+    <br>
+    <form action="" id="choice_form">
+      <input type="submit">
+    </form>
+  </div>
+  <div id="result_container" class="hidden">
+    <h2 id="result_text"></h2>
+    <p>
+      User chooses: <span id='user_choice'></span>
+    <p>
+    <p>
+      Computer chooses: <span id='computer_choice'>...</span>
+    </p>
+    <br/>
+    <a href="/">Play again</a>
+  </div>
+
+  <script type="text/javascript">
+    var $ = {
+      removeClass: function(id, className) {
+        var x = document.getElementById(id)
+        x.removeAttribute('class', className)
+      },
+      setInnerText: function(id, text) {
+        var x = document.getElementById(id)
+        x.innerText = text
+      }
+    }
+
+    var urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.has('choice')) {
+      var userChoice = urlParams.get('choice')
+
+      $.removeClass('result_container', 'hidden');
+      $.setInnerText('user_choice', userChoice) 
+
+      var computerChoice = computerChooses()
+      $.setInnerText('computer_choice', computerChoice)
+
+      var result = judgeGame(userChoice, computerChoice) 
+      $.setInnerText('result_text', result)
+    } else {
+      $.removeClass('play_container', 'hidden');
+    }
+
+    function judgeGame(userChoice, computerChoice) {
+      var combo = userChoice + "_" + computerChoice
+      switch(combo) {
+        case 'rock_scissors':
+        case 'scissors_paper':
+        case 'paper_rock':
+          return 'win'
+        case 'rock_rock':
+        case 'scissors_scissors':
+        case 'paper_paper':
+          return 'draw'
+        default:
+          return 'loss'
+      }
+    }
+    function computerChooses() {
+      var rand = Math.floor(Math.random()*3)
+      var choices = [
+        'rock', 
+        'paper', 
+        'scissors'
+      ]
+      return choices[rand]
+    }
+    
+  </script>
+</body>
+</html>
